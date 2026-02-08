@@ -13,7 +13,7 @@ from PyQt6.QtWidgets import (
     QFileDialog, QProgressBar, QMessageBox, QFrame, QScrollArea,
     QButtonGroup, QRadioButton, QCheckBox, QSizePolicy
 )
-from PyQt6.QtCore import Qt, QThread, pyqtSignal, QSize, QTimer, QUrl
+from PyQt6.QtCore import Qt, QThread, pyqtSignal, QSize, QTimer, QUrl, QObject
 from PyQt6.QtGui import QPixmap, QFont, QIcon, QPalette, QColor
 from PyQt6.QtNetwork import QNetworkAccessManager, QNetworkRequest, QNetworkReply
 
@@ -37,14 +37,17 @@ class ThumbnailLoader(QThread):
         super().__init__()
         self.video_id = video_id
         self.url = url
-        self.manager = QNetworkAccessManager()
+        # Don't create QNetworkAccessManager here - it needs to be in the thread's run method
         
     def run(self):
         from PyQt6.QtCore import QEventLoop
+        
+        # Create the network manager in this thread's context
+        manager = QNetworkAccessManager()
         loop = QEventLoop()
         
         request = QNetworkRequest(QUrl(self.url))
-        reply = self.manager.get(request)
+        reply = manager.get(request)
         
         def on_finished():
             if reply.error() == QNetworkReply.NetworkError.NoError:
@@ -280,9 +283,9 @@ class VideoQueueItem(QFrame):
             }
             VideoQueueItem:hover {
                 background-color: #353535;
-                cursor: pointer;
             }
         """)
+        # Remove cursor from stylesheet - let Qt handle it
         
         layout = QHBoxLayout(self)
         layout.setContentsMargins(10, 10, 10, 10)
@@ -367,6 +370,9 @@ class VideoQueueItem(QFrame):
         """)
         self.delete_btn.clicked.connect(lambda: self.delete_clicked.emit(self.video_info.video_id))
         layout.addWidget(self.delete_btn, alignment=Qt.AlignmentFlag.AlignTop)
+        
+        # Set cursor for hovering
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
         
     def load_thumbnail(self, pixmap: QPixmap):
         self.thumbnail_label.setPixmap(pixmap)
