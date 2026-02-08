@@ -285,7 +285,6 @@ class VideoQueueItem(QFrame):
                 background-color: #353535;
             }
         """)
-        # Remove cursor from stylesheet - let Qt handle it
         
         layout = QHBoxLayout(self)
         layout.setContentsMargins(10, 10, 10, 10)
